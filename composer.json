@@ -1,0 +1,20 @@
+{
+    "name": "chromafox/chrono",
+    "description": "A basic time and task scheduling library",
+    "type": "library",
+	"license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Socks the Fox",
+            "email": "jade@socksthefox.net"
+        }
+    ],
+	"autoload": {
+		"psr-4": {
+			"CF\\Chrono\\": "src/"
+		}
+	},
+    "require": {
+        "symfony/lock": "^4.2"
+    }
+}
