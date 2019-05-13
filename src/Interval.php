@@ -15,6 +15,7 @@ class Interval
 	
 	private $endOfMonth = false;
 	private $dayOfWeek = null;
+	private $dayOrdinal = null;
 	private $minutesInterval = null;
 	private $daysInterval = null;
 	
@@ -134,6 +135,53 @@ class Interval
 			// It's a day of the month I guess?
 			$this->type = "date";
 			$this->day = intval($intervalParts[0]);
+		}
+		
+		// Remove the first part so we can iterate over the modifiers
+		array_shift($intervalParts);
+		
+		foreach($intervalParts as $modifier)
+		{
+			$char1 = $modifier[0];
+			$modifier = substr($modifier, 1);
+			switch($char1)
+			{
+				case '#':
+					if($this->dayOfWeek === null)
+						continue;
+					$this->dayOrdinal = intval($modifier);
+					break;
+				case '@':
+					// Parse the time
+					$a = explode(' ', $modifier);
+					$AM = null;
+					
+					if(isset($a[1]))
+						$AM = (strtoupper($a[1]) == 'AM');
+					
+					$b = explode($a[0]);
+					$this->hour = intval($b[0]);
+					
+					// Go to 24h time if we're not already there
+					if($AM !== null)
+					{
+						// Midnight is special
+						if($AM && $this->hour == 12)
+							$this->hour = 0;
+						// Shift afternoon up
+						else if(!$AM && $this->hour > 12)
+							$this->hour += 12;
+					}
+					
+					$this->minute = intval($b[1]);
+					break;
+				case '>':
+					$this->start = intval($modifier);
+					break;
+				case '<':
+					$this->end = intval($modifier);
+					break;
+			}
 		}
 	}
 }
