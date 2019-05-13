@@ -5,7 +5,7 @@ class Interval
 	private $start = 0;
 	private $end = null;
 	
-	private $at = null;
+	private $timestamp = null;
 	
 	private $month = null;
 	private $day = null;
@@ -15,9 +15,7 @@ class Interval
 	
 	private $endOfMonth = false;
 	private $dayOfWeek = null;
-	private $dayOrdinal = null;
-	private $minutesInterval = null;
-	private $daysInterval = null;
+	private $interval = null;
 	
 	private $type = null;
 	
@@ -45,6 +43,7 @@ class Interval
 			
 			Each day-based task may include a modifier to specify a specific time to run, otherwise default to midnight.
 			It takes the form of `@[time]` i.e. "daily;@12:00 PM" which runs at noon instead of midnight.
+			Also accepts colon-separated 24h time
 			
 			Each periodic task may include a starting timestamp that it will not process before and non-daily intervals will be processed from.
 			It takes the form of `>[timestamp]` i.e. "~30;>1550000000" will run every 30 minutes starting Feb 12th, 2019 at 7:33 PM UTC.
@@ -80,62 +79,26 @@ class Interval
 		
 		$intervalParts = explode(';', $intervalStr);
 		
+		if(in_array($char1, ['@', '~','}','*']))
+			$intervalParts[0] = intval(substr($intervalParts[0], 1));
+		
 		// Timestamps are special (and easy)
 		if($char1 == '@')
 		{
-			$this->type = "timestamp";
-			$this->at = intval(substr($intervalParts[0], 1));
+			$this->onTimestamp($intervalParts[0]);
 			return;
 		}
-		
-		$days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-		
-		if(in_array($char1, ['~','}','*']))
-			$intervalParts[0] = substr($intervalParts[0], 1);
-		
-		if($char1 == '~')
-		{
-			$this->type = "minute";
-			$this->minutesInterval = intval($intervalParts[0]);
-		}
+		else if($char1 == '~')
+			$this->every($intervalParts[0], "minutes");
 		else if($char1 == '}')
-		{
-			$this->type = "day";
-			$this->daysInterval = intval($intervalParts[0]);
-		}
+			$this->every($intervalParts[0], "days");
 		else if($char1 == '*')
-		{
-			$this->type = "day";
-			$this->daysInterval = intval($intervalParts[0]) * 7;
-		}
+			$this->every($intervalParts[0], "weeks");
 		else if($intervalParts[0] == "daily")
-		{
-			$this->type = "day";
-			$this->daysInterval = 1;
-		}
-		else if($intervalParts[0] == "eom")
-		{
-			$this->type = "date";
-			$this->endOfMonth = true;
-		}
-		else if(in_array($intervalParts[0], $days))
-		{
-			$this->type = "date";
-			$this->dayOfWeek = array_search($intervalParts[0], $days);
-		}
-		else if(strpos($intervalParts[0], '/') !== false)
-		{
-			$this->type = "date";
-			$monthDay = explode('/', $intervalParts[0]);
-			$this->month = $monthDay[0];
-			$this->day = $monthDay[1];
-		}
+			$this->daily();
+		// Else it's one of the date-based intervals
 		else
-		{
-			// It's a day of the month I guess?
-			$this->type = "date";
-			$this->day = intval($intervalParts[0]);
-		}
+			$this->on($intervalParts[0]);
 		
 		// Remove the first part so we can iterate over the modifiers
 		array_shift($intervalParts);
@@ -144,44 +107,117 @@ class Interval
 		{
 			$char1 = $modifier[0];
 			$modifier = substr($modifier, 1);
-			switch($char1)
-			{
-				case '#':
-					if($this->dayOfWeek === null)
-						continue;
-					$this->dayOrdinal = intval($modifier);
-					break;
-				case '@':
-					// Parse the time
-					$a = explode(' ', $modifier);
-					$AM = null;
-					
-					if(isset($a[1]))
-						$AM = (strtoupper($a[1]) == 'AM');
-					
-					$b = explode($a[0]);
-					$this->hour = intval($b[0]);
-					
-					// Go to 24h time if we're not already there
-					if($AM !== null)
-					{
-						// Midnight is special
-						if($AM && $this->hour == 12)
-							$this->hour = 0;
-						// Shift afternoon up
-						else if(!$AM && $this->hour > 12)
-							$this->hour += 12;
-					}
-					
-					$this->minute = intval($b[1]);
-					break;
-				case '>':
-					$this->start = intval($modifier);
-					break;
-				case '<':
-					$this->end = intval($modifier);
-					break;
-			}
+			if($char1 == '#')
+				$this->every(intval($modifier), $this->dayOfWeek);
+			else if($char1 == '@')
+				$this->at($modifier);
+			else if($char1 == '>')
+				$this->starting(intval($modifier));
+			else if($char1 == '<')
+				$this->ending(intval($modifier));
 		}
+	}
+	
+	public function onTimestamp($timestamp)
+	{
+		$this->type = "timestamp";
+		$this->timestamp = $timestamp;
+		return $this;
+	}
+	
+	public function daily()
+	{
+		return $this->every(1, "day");
+	}
+	
+	public function every($interval, $stride)
+	{
+		if($stride === null)
+			return $this;
+		
+		$days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+		
+		$this->interval = $interval;
+		if($stride == "minute" || $stride == "minutes")
+			$this->type = "minute";
+		else if($stride == "day" || $stride == "days")
+			$this->type = "day";
+		else if($stride == "week" || $stride == "weeks")
+		{
+			$this->type = "day";
+			$this->interval *= 7;
+		}
+		else if(in_array($stride, $days))
+		{
+			$this->type = "date";
+			$this->dayOfWeek = $stride;
+		}
+		return $this;
+	}
+	
+	public function on($date)
+	{
+		$this->type = "date";
+		
+		$days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+		
+		if($date == "eom")
+			$this->endOfMonth = true;
+		else if(in_array($date, $days))
+			$this->dayOfWeek = $date;
+		else if(strpos($date, '/') !== false)
+		{
+			$monthDay = explode('/', $date);
+			$this->month = intval($monthDay[0]);
+			$this->day = intval($monthDay[1]);
+		}
+		else
+			$this->day = intval($a);
+		
+		return $this;
+	}
+	
+	public function at($time)
+	{
+		// Minute/hour based intervals can't be run at a specific time
+		if($this->type == "minute")
+			return $this;
+		
+		// Parse the time
+		$a = explode(' ', $time);
+		$AM = null;
+		
+		if(isset($a[1]))
+			$AM = (strtoupper($a[1]) == 'AM');
+		
+		$b = explode($a[0]);
+		$this->hour = intval($b[0]);
+		
+		// Go to 24h time if we're not already there
+		if($AM !== null)
+		{
+			// Midnight is special
+			if($AM && $this->hour == 12)
+				$this->hour = 0;
+			// Shift afternoon up
+			else if(!$AM && $this->hour > 12)
+				$this->hour += 12;
+		}
+		
+		$this->minute = intval($b[1]);
+		
+		return $this;
+	}
+	
+	public function starting($timestamp)
+	{
+		$this->start = $timestamp;
+		return $this;
+	}
+	
+	public function ending($timestamp)
+	{
+		$this->end = $timestamp;
+		return $this;
 	}
 }
