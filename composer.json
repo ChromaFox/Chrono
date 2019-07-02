@@ -16,5 +16,8 @@
 	},
     "require": {
         "symfony/lock": "^4.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "8"
     }
 }
