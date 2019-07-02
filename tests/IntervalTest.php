@@ -23,7 +23,7 @@ final class IntervalTest extends TestCase
 		$interval->every(15, "minutes");
 		
 		$values = [];
-		for($i = START_2019; $i < END_2019; $i += 15*60)
+		for($i = START_2019; $i <= END_2019; $i += 15*60)
 			$values []= $i;
 		
 		$this->assertEquals($values, $interval->getIntervalsBetween(START_2019, END_2019));
