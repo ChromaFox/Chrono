@@ -256,7 +256,7 @@ class Interval
 			// We need to find the integer X in
 			//  $this->start + X * $minutes >= $realStart
 			
-			$minutes = $this->interval * 60000;
+			$minutes = $this->interval * 60;
 			$startDiff = $realStart - $this->start;
 			$X = intval(ceil($startDiff/$minutes));
 			
