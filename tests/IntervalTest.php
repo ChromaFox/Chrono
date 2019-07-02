@@ -28,4 +28,17 @@ final class IntervalTest extends TestCase
 		
 		$this->assertEquals($values, $interval->getIntervalsBetween(START_2019, END_2019));
 	}
+	
+	public function testDays()
+	{
+		$interval = new \CF\Chrono\Interval();
+		
+		$interval->every(1, "day");
+		
+		$values = [];
+		for($i = START_2019; $i <= END_2019; $i += 24*60*60)
+			$values []= $i;
+		
+		$this->assertEquals($values, $interval->getIntervalsBetween(START_2019, END_2019));
+	}
 }
