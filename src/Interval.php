@@ -245,7 +245,7 @@ class Interval
 		
 		$realStart = max($this->start, $starting);
 		$realEnd = $ending;
-		if($this->ending !== null)
+		if($this->end !== null)
 			$realEnd = min($this->end, $ending);
 		
 		$result = [];
@@ -317,7 +317,7 @@ class Interval
 		return $result;
 	}
 	
-	private getDateTimeInfo($dateTime)
+	private function getDateTimeInfo($dateTime)
 	{
 		$str = $dateTime->format("Y n j G i D t");
 		$vals = explode(" ", $str);
