@@ -274,24 +274,24 @@ class Interval
 			// Almost the same as with minutes but with some
 			//  added annoyingness thanks to being run at a specific
 			//  time of day
-			$startDT = new DateTime("@{$this->start}");
+			$startDT = new \DateTime("@{$this->start}");
 			$startDT->setTimezone($this->tz);
 			$startDT->setTime($this->hour,$this->minute,0);
-			$realStartDT = new DateTime("@{$realStart}");
+			$realStartDT = new \DateTime("@{$realStart}");
 			$realStartDT->setTimezone($this->tz);
 			
-			$endDT = new DateTime("@{$realEnd}");
+			$endDT = new \DateTime("@{$realEnd}");
 			
 			$startDiff = $startDT->diff($realStartDT);
 			
 			$X = intval(ceil($startDiff->days / $this->interval));
-			$XDT = new DateInterval("{$X}D");
-			$i = new DateTime("@{$this->start}");
+			$XDT = new \DateInterval("P{$X}D");
+			$i = new \DateTime("@{$this->start}");
 			$i->setTimezone($this->tz);
 			$i->setTime($this->hour,$this->minute,0);
 			$i->add($XDT);
 			
-			$interval = new DateInterval("{$this->interval}D");
+			$interval = new \DateInterval("P{$this->interval}D");
 			
 			if($i > $endDT)
 				return [];
@@ -306,12 +306,12 @@ class Interval
 		else
 		{
 			// Weekdays and dates are basically the same
-			$realStartDT = new DateTime("@{$realStart}");
+			$realStartDT = new \DateTime("@{$realStart}");
 			$realStartDT->setTimezone($this->tz);
 			
 			
 			
-			$endDT = new DateTime("@{$realEnd}");
+			$endDT = new \DateTime("@{$realEnd}");
 		}
 		
 		return $result;
