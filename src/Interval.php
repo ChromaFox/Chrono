@@ -284,7 +284,7 @@ class Interval
 			
 			$startDiff = $startDT->diff($realStartDT);
 			
-			$X = intval(ceil($startDiff->days / $this->interval));
+			$X = $startDiff->days;
 			$XDT = new \DateInterval("P{$X}D");
 			$i = new \DateTime("@{$this->start}");
 			$i->setTimezone($this->tz);
