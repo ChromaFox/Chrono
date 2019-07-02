@@ -223,7 +223,7 @@ class Interval
 		return $this;
 	}
 	
-	public function getIntervalsBetween($starting, $ending)
+	public function getMatchesBetween($starting, $ending)
 	{
 		// Timestamps are easy! Just check if it's between the start and end times
 		//  and if so, return it.

@@ -13,7 +13,7 @@ final class IntervalTest extends TestCase
 		$interval = new \CF\Chrono\Interval();
 		$interval->onTimestamp(STAMP_2019);
 		
-		$this->assertContains(STAMP_2019, $interval->getIntervalsBetween(START_2019, END_2019));
+		$this->assertContains(STAMP_2019, $interval->getMatchesBetween(START_2019, END_2019));
 	}
 	
 	public function testMinutes()
@@ -26,7 +26,7 @@ final class IntervalTest extends TestCase
 		for($i = START_2019; $i <= END_2019; $i += 15*60)
 			$values []= $i;
 		
-		$this->assertEquals($values, $interval->getIntervalsBetween(START_2019, END_2019));
+		$this->assertEquals($values, $interval->getMatchesBetween(START_2019, END_2019));
 	}
 	
 	public function testDays()
@@ -39,6 +39,19 @@ final class IntervalTest extends TestCase
 		for($i = START_2019; $i <= END_2019; $i += 24*60*60)
 			$values []= $i;
 		
-		$this->assertEquals($values, $interval->getIntervalsBetween(START_2019, END_2019));
+		$this->assertEquals($values, $interval->getMatchesBetween(START_2019, END_2019));
+	}
+	
+	public function testWeeks()
+	{
+		$interval = new \CF\Chrono\Interval();
+		
+		$interval->every(2, "weeks");
+		
+		$values = [];
+		for($i = START_2019; $i <= END_2019; $i += 14*24*60*60)
+			$values []= $i;
+		
+		$this->assertEquals($values, $interval->getMatchesBetween(START_2019, END_2019));
 	}
 }
