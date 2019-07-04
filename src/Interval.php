@@ -166,7 +166,7 @@ class Interval
 		if($date == "eom")
 			$this->endOfMonth = true;
 		else if(in_array($date, $days))
-			$this->every(1,$date);
+			$this->every(0,$date);
 		else if(strpos($date, '/') !== false)
 		{
 			$monthDay = explode('/', $date);
@@ -306,12 +306,49 @@ class Interval
 		else
 		{
 			// Weekdays and dates are basically the same
+			$startDT = new \DateTime("@{$this->start}");
+			$startDT->setTimezone($this->tz);
+			$startDT->setTime($this->hour,$this->minute,0);
 			$realStartDT = new \DateTime("@{$realStart}");
 			$realStartDT->setTimezone($this->tz);
 			
-			
-			
 			$endDT = new \DateTime("@{$realEnd}");
+			
+			$startDiff = $startDT->diff($realStartDT);
+			
+			$X = $startDiff->days;
+			$XDT = new \DateInterval("P{$X}D");
+			$i = new \DateTime("@{$this->start}");
+			$i->setTimezone($this->tz);
+			$i->setTime($this->hour,$this->minute,0);
+			$i->add($XDT);
+			
+			$interval = new \DateInterval("P1D");
+			
+			if($i > $endDT)
+				return [];
+			
+			do
+			{
+				$info = $this->getDateTimeInfo($i);
+				
+				if($this->type == "date" && ($this->month === null || $this->month == $info['month']) && ($this->day == $info['day']))
+					$result[] = $i->getTimestamp();
+				
+				else if($this->type == "weekday" && $this->dayOfWeek == $info['weekday'])
+				{
+					if($this->interval == 0 || $this->interval == $info['ord'])
+						$result[] = $i->getTimestamp();
+				}
+				
+				else if($this->endOfMonth && $info['eom'])
+					$result[] = $i->getTimestamp();
+				
+				$i->add($interval);
+			}
+			while($i <= $endDT);
+			
+			
 		}
 		
 		return $result;
