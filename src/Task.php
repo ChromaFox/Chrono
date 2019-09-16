@@ -38,7 +38,13 @@ class Task
 		if($this->noDuplicates)
 			$timestamps = array_unique($timestamps);
 		
-		foreach($timestamps as $timestamp)
-			call_user_func(this->func, $timestamp, $this->params);
+		$timestamps = sort($timestamps);
+		
+		end($timestamps);
+		$end = key($timestamps);
+		reset($timestamps);
+		
+		foreach($timestamps as $i => $timestamp)
+			call_user_func(this->func, $timestamp, $i == $end, $this->params);
 	}
 }
