@@ -134,9 +134,6 @@ class Interval
 	
 	public function every($interval, $stride)
 	{
-		if($stride === null)
-			return $this;
-		
 		$days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 		
 		$this->interval = $interval;
@@ -154,6 +151,9 @@ class Interval
 			$this->type = "weekday";
 			$this->dayOfWeek = $stride;
 		}
+		else
+			throw new \Exception("Unknown time unit " . $stride);
+		
 		return $this;
 	}
 	
@@ -173,8 +173,10 @@ class Interval
 			$this->month = intval($monthDay[0]);
 			$this->day = intval($monthDay[1]);
 		}
+		else if(intval($date))
+			$this->day = intval($date);
 		else
-			$this->day = intval($a);
+			throw new \Exception("Unknown time unit " . $date);
 		
 		return $this;
 	}
@@ -192,7 +194,7 @@ class Interval
 		if(isset($a[1]))
 			$AM = (strtoupper($a[1]) == 'AM');
 		
-		$b = explode($a[0]);
+		$b = explode(':', $a[0]);
 		$this->hour = intval($b[0]);
 		
 		// Go to 24h time if we're not already there
@@ -202,7 +204,7 @@ class Interval
 			if($AM && $this->hour == 12)
 				$this->hour = 0;
 			// Shift afternoon up
-			else if(!$AM && $this->hour > 12)
+			else if(!$AM && $this->hour < 12)
 				$this->hour += 12;
 		}
 		
@@ -269,40 +271,6 @@ class Interval
 			// Get all the intervals until the end
 			$result = range($i, $realEnd, $minutes);
 		}
-		else if($this->type == "day")
-		{
-			// Almost the same as with minutes but with some
-			//  added annoyingness thanks to being run at a specific
-			//  time of day
-			$startDT = new \DateTime("@{$this->start}");
-			$startDT->setTimezone($this->tz);
-			$startDT->setTime($this->hour,$this->minute,0);
-			$realStartDT = new \DateTime("@{$realStart}");
-			$realStartDT->setTimezone($this->tz);
-			
-			$endDT = new \DateTime("@{$realEnd}");
-			
-			$startDiff = $startDT->diff($realStartDT);
-			
-			$X = $startDiff->days;
-			$XDT = new \DateInterval("P{$X}D");
-			$i = new \DateTime("@{$this->start}");
-			$i->setTimezone($this->tz);
-			$i->setTime($this->hour,$this->minute,0);
-			$i->add($XDT);
-			
-			$interval = new \DateInterval("P{$this->interval}D");
-			
-			if($i > $endDT)
-				return [];
-			
-			do
-			{
-				$result[] = $i->getTimestamp();
-				$i->add($interval);
-			}
-			while($i <= $endDT);
-		}
 		else
 		{
 			// Weekdays and dates are basically the same
@@ -317,13 +285,23 @@ class Interval
 			$startDiff = $startDT->diff($realStartDT);
 			
 			$X = $startDiff->days;
+			
+			if($this->type == "day")
+				$X = intval(ceil($X/$this->interval)) * $this->interval;
+			
+			if($startDiff->h || $startDiff->i || $startDiff->s)
+				$X++;
+			
 			$XDT = new \DateInterval("P{$X}D");
 			$i = new \DateTime("@{$this->start}");
 			$i->setTimezone($this->tz);
 			$i->setTime($this->hour,$this->minute,0);
 			$i->add($XDT);
 			
-			$interval = new \DateInterval("P1D");
+			if($this->type == "day")
+				$interval = new \DateInterval("P{$this->interval}D");
+			else
+				$interval = new \DateInterval("P1D");
 			
 			if($i > $endDT)
 				return [];
@@ -332,7 +310,9 @@ class Interval
 			{
 				$info = $this->getDateTimeInfo($i);
 				
-				if($this->type == "date" && ($this->month === null || $this->month == $info['month']) && ($this->day == $info['day']))
+				if($this->type == "day"
+				|| $this->endOfMonth && $info['eom']
+				|| $this->type == "date" && ($this->month === null || $this->month == $info['month']) && ($this->day == $info['day']))
 					$result[] = $i->getTimestamp();
 				
 				else if($this->type == "weekday" && $this->dayOfWeek == $info['weekday'])
@@ -340,9 +320,6 @@ class Interval
 					if($this->interval == 0 || $this->interval == $info['ord'])
 						$result[] = $i->getTimestamp();
 				}
-				
-				else if($this->endOfMonth && $info['eom'])
-					$result[] = $i->getTimestamp();
 				
 				$i->add($interval);
 			}
