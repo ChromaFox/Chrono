@@ -18,7 +18,7 @@ class Scheduler
 		$this->taskList[] = $task;
 	}
 	
-	public function runTasks($lastRun = null, $currentTime = null)
+	public function runTasksSince($lastRun, $currentTime = null)
 	{
 		if(!$this->lock->acquire())
 			return null;
@@ -26,14 +26,10 @@ class Scheduler
 		if($currentTime === null)
 			$currentTime = time();
 		
-		if($lastRun === null)
-		{
-			// Figure out when we were last run
-		}
-		
 		try
 		{
-			
+			foreach($this->taskList as $task)
+				$task->run($lastRun, $currentTime);
 		}
 		finally
 		{
