@@ -6,6 +6,7 @@ class Task
 	private $params;
 	private $times;
 	private $noDuplicates;
+	private $realStart;
 	
 	public function __construct($func, $params = null)
 	{
@@ -13,6 +14,7 @@ class Task
 		$this->params = $params;
 		$this->times = [];
 		$this->noDuplicates = true;
+		$this->realStart = null;
 	}
 	
 	public function allowDuplicateRuns()
@@ -28,9 +30,17 @@ class Task
 			$this->times[] = $intervals;
 	}
 	
+	public function lastRun($time)
+	{
+		$this->realStart = $time;
+	}
+	
 	public function run($start, $end)
 	{
 		$timestamps = [];
+		
+		if($this->realStart !== null)
+			$start = $this->realStart;
 		
 		foreach($this->times as $interval)
 			$timestamps = array_merge($timestamps, $interval->getMatchesBetween($start, $end));
