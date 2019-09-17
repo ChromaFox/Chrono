@@ -23,7 +23,7 @@ class Task
 	public function schedule($intervals)
 	{
 		if(gettype($intervals) == "array")
-			$this->times = array_merge(this->times, $intervals);
+			$this->times = array_merge($this->times, $intervals);
 		else
 			$this->times[] = $intervals;
 	}
@@ -45,6 +45,6 @@ class Task
 		reset($timestamps);
 		
 		foreach($timestamps as $i => $timestamp)
-			call_user_func(this->func, $timestamp, $i == $end, $this->params);
+			call_user_func($this->func, $timestamp, $i == $end, $this->params);
 	}
 }
