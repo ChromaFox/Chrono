@@ -8,8 +8,8 @@ class Scheduler
 	
 	public function __construct()
 	{
-		$this->lockStore = new Symfony\Component\Lock\Store\SemaphoreStore();
-		$factory = new Symfony\Component\Lock\Factory($this->lockStore);
+		$this->lockStore = new \Symfony\Component\Lock\Store\FlockStore(sys_get_temp_dir());
+		$factory = new \Symfony\Component\Lock\Factory($this->lockStore);
 		$this->lock = $factory->createLock("chromafox-tasklock");
 	}
 	
