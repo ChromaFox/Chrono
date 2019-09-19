@@ -48,7 +48,7 @@ class Task
 		if($this->noDuplicates)
 			$timestamps = array_unique($timestamps);
 		
-		$timestamps = sort($timestamps);
+		sort($timestamps);
 		
 		end($timestamps);
 		$end = key($timestamps);
