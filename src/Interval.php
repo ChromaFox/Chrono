@@ -269,7 +269,10 @@ class Interval
 				return [];
 			
 			// Get all the intervals until the end
-			$result = range($i, $realEnd, $minutes);
+			if($i + $minutes > $realEnd)
+				$result = [$i];
+			else
+				$result = range($i, $realEnd, $minutes);
 		}
 		else
 		{
