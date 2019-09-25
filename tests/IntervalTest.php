@@ -26,6 +26,8 @@ final class IntervalTest extends TestCase
 			$values []= $i;
 		
 		$this->assertEquals($values, $interval->getMatchesBetween(START_2019, END_2019));
+		$this->assertEquals([START_2019], $interval->getMatchesBetween(START_2019, START_2019 + 300));
+		$this->assertEquals([START_2019, START_2019+900], $interval->getMatchesBetween(START_2019, START_2019 + 900));
 	}
 	
 	public function testDays()
@@ -216,5 +218,13 @@ final class IntervalTest extends TestCase
 		$interval = new \CF\Chrono\Interval("}40");
 		$interval->starting(1548806400);
 		$this->assertEquals([], $interval->getMatchesBetween(1548892800, 1549324800));
+	}
+	
+	public function testInBetweenMinutes()
+	{
+		$interval = new \CF\Chrono\Interval();
+		$interval->every("15", "minutes");
+		
+		$this->assertEquals([], $interval->getMatchesBetween(START_2019 + 10, START_2019 + 300));
 	}
 }
