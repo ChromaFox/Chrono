@@ -347,7 +347,7 @@ class Interval
 			'minute' => $vals[4],
 			'weekday' => strtolower($vals[5]),
 			'eom' => $vals[2] == $vals[6],
-			'ord' => ($vals[2] % 7) + 1
+			'ord' => intdiv($vals[2]-1, 7) + 1
 		];
 		
 		return $result;
