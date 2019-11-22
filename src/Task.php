@@ -55,6 +55,9 @@ class Task
 		reset($timestamps);
 		
 		foreach($timestamps as $i => $timestamp)
-			call_user_func($this->func, $timestamp, $i == $end, $this->params);
+		{
+			if(call_user_func($this->func, $timestamp, $i == $end, $this->params) === false)
+				break;
+		}
 	}
 }
